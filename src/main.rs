@@ -46,6 +46,38 @@ impl eframe::App for ImageViewer {
                 if let Some(path) = dropped_file.path {
                     self.image_path = Some(path.clone());
                     self.load_image(ctx, &path);
+                    
+                    // 获取屏幕大小
+                    
+                    if let Some(image_size) = self.image_size {
+                        // 计算合适的窗口大小
+                        let screen_rect = ctx.screen_rect();
+                        let screen_size = screen_rect.size();
+                        println!("Image size: {}x{}", image_size.x, image_size.y);
+                        println!("Screen ratio: {}", screen_size.x / screen_size.y);
+                        println!("Image ratio: {}", image_size.x / image_size.y);
+                        
+                        let screen_ratio = screen_size.x / screen_size.y;
+                        let image_ratio = image_size.x / image_size.y;
+                        
+                        let window_size = if image_ratio > screen_ratio {
+                            // 图片更宽，以屏幕宽度为准
+                            let width = screen_size.x * 0.9; // 留出一些边距
+                            egui::Vec2::new(width, width / image_ratio)
+                        } else {
+                            // 图片更高，以屏幕高度为准
+                            let height = screen_size.y * 0.9; // 留出一些边距
+                            egui::Vec2::new(height * image_ratio, height)
+                        };
+                        
+                        // 调整窗口大小并居中
+                        ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(window_size));
+                        let window_pos = egui::Pos2::new(
+                            (screen_size.x - window_size.x) * 0.5,
+                            (screen_size.y - window_size.y) * 0.5
+                        );
+                        ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(window_pos));
+                    }
                 }
             }
         }
