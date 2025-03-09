@@ -1,7 +1,6 @@
 use eframe::egui;
 use image::ImageReader;
 use std::path::PathBuf;
-use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 use windows::Win32::UI::Shell::{SHAppBarMessage, APPBARDATA, ABM_GETTASKBARPOS};
 use windows::Win32::Foundation::{RECT, LPARAM, HWND};
 
@@ -76,6 +75,7 @@ impl eframe::App for ImageViewer {
                     if let Some(image_size) = self.image_size {
                         // 获取显示器大小
                         if let Some(monitor_info) = ctx.input(|i| i.viewport().monitor_size) {
+                            let monitor_info= egui::Vec2::new(monitor_info.x, monitor_info.y - get_taskbar_height());
                             println!("Monitor size: {}x{}", monitor_info.x, monitor_info.y);
                             println!("Image size: {}x{}", image_size.x, image_size.y);
                             println!("Monitor ratio: {}", monitor_info.x / monitor_info.y);
