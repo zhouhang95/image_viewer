@@ -4,6 +4,9 @@ use std::path::PathBuf;
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_decorations(false)
+            .with_inner_size([800.0, 600.0]),
         ..Default::default()
     };
 
@@ -32,6 +35,11 @@ impl Default for ImageViewer {
 
 impl eframe::App for ImageViewer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // 检查 ESC 键
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+
         // 处理文件拖放
         if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
             if let Some(dropped_file) = ctx.input(|i| i.raw.dropped_files.first().cloned()) {
