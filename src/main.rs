@@ -1,6 +1,30 @@
 use eframe::egui;
 use image::ImageReader;
 use std::path::PathBuf;
+use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+use windows::Win32::UI::Shell::{SHAppBarMessage, APPBARDATA, ABM_GETTASKBARPOS};
+use windows::Win32::Foundation::{RECT, LPARAM, HWND};
+
+fn get_taskbar_height() -> f32 {
+    unsafe {
+        let mut appbar_data = APPBARDATA {
+            cbSize: std::mem::size_of::<APPBARDATA>() as u32,
+            hWnd: HWND::default(),
+            uCallbackMessage: 0,
+            uEdge: 0,
+            rc: RECT { left: 0, top: 0, right: 0, bottom: 0 },
+            lParam: LPARAM(0),
+        };
+        
+        let result = SHAppBarMessage(ABM_GETTASKBARPOS, &mut appbar_data);
+        if result != 0 {
+            let taskbar_rect = appbar_data.rc;
+            (taskbar_rect.bottom - taskbar_rect.top) as f32
+        } else {
+            40.0 // 默认任务栏高度
+        }
+    }
+}
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
@@ -50,33 +74,34 @@ impl eframe::App for ImageViewer {
                     // 获取屏幕大小
                     
                     if let Some(image_size) = self.image_size {
-                        // 计算合适的窗口大小
-                        let screen_rect = ctx.screen_rect();
-                        let screen_size = screen_rect.size();
-                        println!("Image size: {}x{}", image_size.x, image_size.y);
-                        println!("Screen ratio: {}", screen_size.x / screen_size.y);
-                        println!("Image ratio: {}", image_size.x / image_size.y);
-                        
-                        let screen_ratio = screen_size.x / screen_size.y;
-                        let image_ratio = image_size.x / image_size.y;
-                        
-                        let window_size = if image_ratio > screen_ratio {
-                            // 图片更宽，以屏幕宽度为准
-                            let width = screen_size.x * 0.9; // 留出一些边距
-                            egui::Vec2::new(width, width / image_ratio)
-                        } else {
-                            // 图片更高，以屏幕高度为准
-                            let height = screen_size.y * 0.9; // 留出一些边距
-                            egui::Vec2::new(height * image_ratio, height)
-                        };
-                        
-                        // 调整窗口大小并居中
-                        ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(window_size));
-                        let window_pos = egui::Pos2::new(
-                            (screen_size.x - window_size.x) * 0.5,
-                            (screen_size.y - window_size.y) * 0.5
-                        );
-                        ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(window_pos));
+                        // 获取显示器大小
+                        if let Some(monitor_info) = ctx.input(|i| i.viewport().monitor_size) {
+                            println!("Monitor size: {}x{}", monitor_info.x, monitor_info.y);
+                            println!("Image size: {}x{}", image_size.x, image_size.y);
+                            println!("Monitor ratio: {}", monitor_info.x / monitor_info.y);
+                            println!("Image ratio: {}", image_size.x / image_size.y);
+                            
+                            let monitor_ratio = monitor_info.x / monitor_info.y;
+                            let image_ratio = image_size.x / image_size.y;
+                            
+                            let window_size = if image_ratio > monitor_ratio {
+                                // 图片更宽，以显示器宽度为准
+                                let width = monitor_info.x;
+                                egui::Vec2::new(width, width / image_ratio)
+                            } else {
+                                // 图片更高，以显示器高度为准
+                                let height = monitor_info.y;
+                                egui::Vec2::new(height * image_ratio, height)
+                            };
+                            
+                            // 调整窗口大小并居中
+                            ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(window_size));
+                            let window_pos = egui::Pos2::new(
+                                (monitor_info.x - window_size.x) * 0.5,
+                                (monitor_info.y - window_size.y) * 0.5
+                            );
+                            ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(window_pos));
+                        }
                     }
                 }
             }

@@ -7,3 +7,4 @@ edition = "2021"
 egui = "0.31"
 eframe = "0.31"
 image = "0.25"
+windows = { version = "0.60", features = ["Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_Foundation"] }
