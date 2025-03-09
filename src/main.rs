@@ -75,11 +75,15 @@ impl eframe::App for ImageViewer {
                     if let Some(image_size) = self.image_size {
                         // 获取显示器大小
                         if let Some(monitor_info) = ctx.input(|i| i.viewport().monitor_size) {
-                            let monitor_info= egui::Vec2::new(monitor_info.x, monitor_info.y - get_taskbar_height());
+                            let taskbar_height = get_taskbar_height();
+                            let available_height = monitor_info.y - taskbar_height;
+                            let monitor_info = egui::Vec2::new(monitor_info.x, available_height);
+                            
                             println!("Monitor size: {}x{}", monitor_info.x, monitor_info.y);
                             println!("Image size: {}x{}", image_size.x, image_size.y);
                             println!("Monitor ratio: {}", monitor_info.x / monitor_info.y);
                             println!("Image ratio: {}", image_size.x / image_size.y);
+                            println!("Taskbar height: {}", taskbar_height);
                             
                             let monitor_ratio = monitor_info.x / monitor_info.y;
                             let image_ratio = image_size.x / image_size.y;
@@ -89,7 +93,7 @@ impl eframe::App for ImageViewer {
                                 let width = monitor_info.x;
                                 egui::Vec2::new(width, width / image_ratio)
                             } else {
-                                // 图片更高，以显示器高度为准
+                                // 图片更高，以可用工作区高度为准
                                 let height = monitor_info.y;
                                 egui::Vec2::new(height * image_ratio, height)
                             };
@@ -118,11 +122,8 @@ impl eframe::App for ImageViewer {
                     let scale = (available_size.x / image_size.x).min(available_size.y / image_size.y);
                     let scaled_size = image_size * scale;
 
-                    // 计算居中位置
-                    let margin = (available_size - scaled_size) * 0.5;
-                    ui.add_space(margin.y);
-                    ui.horizontal(|ui| {
-                        ui.add_space(margin.x);
+                    // 直接在中心显示图片，不添加边距
+                    ui.centered_and_justified(|ui| {
                         ui.add(egui::Image::new(texture).fit_to_exact_size(scaled_size));
                     });
                 }
