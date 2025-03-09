@@ -111,7 +111,13 @@ impl eframe::App for ImageViewer {
             }
         }
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        let panel = if self.texture.is_some() {
+            egui::CentralPanel::default().frame(egui::Frame::new())
+        } else {
+            egui::CentralPanel::default()
+        };
+
+        panel.show(ctx, |ui| {
             // 显示图片
             if let Some(texture) = &self.texture {
                 if let Some(image_size) = self.image_size {
