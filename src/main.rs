@@ -53,8 +53,13 @@ impl eframe::App for ImageViewer {
                     let scale = (available_size.x / image_size.x).min(available_size.y / image_size.y);
                     let scaled_size = image_size * scale;
 
-                    // 显示缩放后的图片
-                    ui.image(texture);
+                    // 计算居中位置
+                    let margin = (available_size - scaled_size) * 0.5;
+                    ui.add_space(margin.y);
+                    ui.horizontal(|ui| {
+                        ui.add_space(margin.x);
+                        ui.add(egui::Image::new(texture).fit_to_exact_size(scaled_size));
+                    });
                 }
             }
         });
